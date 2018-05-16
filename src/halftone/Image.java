@@ -9,7 +9,7 @@ public interface Image {
 
     public void imWrite();
 
-    public void imProcess(BufferedImage image);
+    public BufferedImage imProcess(BufferedImage image);
 
     public void imSave();
 

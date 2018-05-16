@@ -2,6 +2,7 @@ package halftone;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
@@ -27,7 +28,9 @@ public class Halftone implements Image {
     }
 
     @Override
-    public void imProcess(BufferedImage image) {
+    public BufferedImage imProcess(BufferedImage image) {
+
+        BufferedImage grayImage = image;
         // Check if image is grayscale
         int type = image.getColorModel().getColorSpace().getType();
         boolean isGrayscale = (type == ColorSpace.TYPE_GRAY || type == ColorSpace.CS_GRAY);
@@ -35,14 +38,30 @@ public class Halftone implements Image {
 
         if (isGrayscale) {
             System.out.println("Image is Grayscale" );
+
         } else {
             System.out.println("Image is not Grayscale"+image.getColorModel().getColorSpace());
+            grayImage = im2gray(image);
         }
 
+        return grayImage;
     }
 
     @Override
     public void imSave() {
+
+    }
+
+    // Helper methods for converting image to grayscale
+    private BufferedImage im2gray(BufferedImage image) {
+        BufferedImage grayImage = new BufferedImage(
+                image.getWidth(),
+                image.getHeight(),
+                BufferedImage.TYPE_BYTE_GRAY);
+        Graphics g = grayImage.getGraphics();
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+        return grayImage;
 
     }
 }
