@@ -57,8 +57,8 @@ public class Halftone {
             int imgHeight = imgOrig.getHeight();
 
             //TODO fix magic size of the thresholdArray maybe use sqrt?
-            int taWidth = 4;
-            int taHeight = 4;
+            int taWidth = (int)Math.sqrt(thresholdArray.length);
+            int taHeight = taWidth;
 
             // Check if image is grayscale
             int type = imgOrig.getColorModel().getColorSpace().getType();

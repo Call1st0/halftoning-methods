@@ -81,7 +81,7 @@ public class JavaHalftoneController {
                     image = img.im2gray(image);
                     break;
                 case "Ordered dither":
-                    image = img.orderedDither(image, ArrayGenerator.createArray());
+                    image = img.orderedDither(image, ArrayGenerator.createArray(30));
                     break;
                 case "Error diffusion":
                     break;
