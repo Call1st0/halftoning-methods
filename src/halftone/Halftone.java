@@ -18,7 +18,7 @@ public class Halftone {
             System.out.println("No such file");
         }
 
-    return null;
+        return null;
     }
 
     public void imWrite() {
@@ -45,71 +45,115 @@ public class Halftone {
     }
 
     /**
+     * Method for halftoning using threshold
+     * @param imgOrig
+     * @param thresholdLevel
+     * @return threshold image
+     */
+    public BufferedImage threshold(BufferedImage imgOrig, int thresholdLevel) {
+
+        // Check if image is grayscale
+        int type = imgOrig.getColorModel().getColorSpace().getType();
+        boolean isGrayscale = (type == ColorSpace.TYPE_GRAY || type == ColorSpace.CS_GRAY);
+
+        if (isGrayscale) {
+            System.out.println("Image is Grayscale" );
+
+        } else {
+            System.out.println("Image is not Grayscale"+imgOrig.getColorModel().getColorSpace());
+            imgOrig = im2gray(imgOrig);
+        }
+
+        // initialize Raster of the original image and WritableRaster of the threshold Image
+        BufferedImage imgThreshold= new BufferedImage(imgOrig.getWidth(),imgOrig.getHeight(),BufferedImage.TYPE_BYTE_BINARY);
+        Raster imgOrigRaster = imgOrig.getData();
+        WritableRaster imgThresholdRaster = imgOrigRaster.createCompatibleWritableRaster();
+
+        for (int i = 0; i < imgOrig.getHeight(); i++) {
+            for (int j = 0; j <imgOrig.getWidth() ; j++) {
+                int[] tempArray = new int[1]; //TODO array with only one element, since the image is grayscale, ugly consider refactoring
+
+                imgOrigRaster.getPixel(j, i, tempArray);
+
+                if (tempArray[0] > thresholdLevel) {
+                    tempArray[0] = 255;
+                    imgThresholdRaster.setPixel(j, i, tempArray);
+                } else {
+                    tempArray[0] = 0;
+                    imgThresholdRaster.setPixel(j, i, tempArray);
+                }
+            }
+        }
+        imgThreshold.setData(imgThresholdRaster);
+        return imgThreshold;
+    }
+
+    /**
      * Method for halftoning using ordered dither
      * @param imgOrig Original image
      * @param thresholdArray Threshold array as integer array
      * @return dithered image
      */
-        public BufferedImage orderedDither(BufferedImage imgOrig, int[] thresholdArray) {
+    public BufferedImage orderedDither(BufferedImage imgOrig, int[] thresholdArray) {
 
-            // size of the original image
-            int imgWidth = imgOrig.getWidth();
-            int imgHeight = imgOrig.getHeight();
+        // size of the original image
+        int imgWidth = imgOrig.getWidth();
+        int imgHeight = imgOrig.getHeight();
 
-            //TODO fix magic size of the thresholdArray maybe use sqrt?
-            int taWidth = (int)Math.sqrt(thresholdArray.length);
-            int taHeight = taWidth;
+        //TODO fix magic size of the thresholdArray maybe use sqrt?
+        int taWidth = (int)Math.sqrt(thresholdArray.length);
+        int taHeight = taWidth;
 
-            // Check if image is grayscale
-            int type = imgOrig.getColorModel().getColorSpace().getType();
-            boolean isGrayscale = (type == ColorSpace.TYPE_GRAY || type == ColorSpace.CS_GRAY);
+        // Check if image is grayscale
+        int type = imgOrig.getColorModel().getColorSpace().getType();
+        boolean isGrayscale = (type == ColorSpace.TYPE_GRAY || type == ColorSpace.CS_GRAY);
 
-            if (isGrayscale) {
-                System.out.println("Image is Grayscale" );
+        if (isGrayscale) {
+            System.out.println("Image is Grayscale" );
 
-            } else {
-                System.out.println("Image is not Grayscale"+imgOrig.getColorModel().getColorSpace());
-                imgOrig = im2gray(imgOrig);
-            }
-
-
-            // initialize Raster of the original image and WritableRaster of the dietheredImage
-            BufferedImage imgDiethered = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_BYTE_BINARY);
-            Raster imgOrigRaster = imgOrig.getData();
-            WritableRaster imgDietheredRaster = imgOrigRaster.createCompatibleWritableRaster();
-
-            // initialize a point and rectangle for dithering
-            Point point = new Point();
-            Dimension dim = new Dimension(taWidth, taHeight);
-            Rectangle roiRect = new Rectangle(point, dim);
-
-            // initialize arrays for getting pixel data
-            int[] tempArray = new int[taWidth*taHeight];
-            int[] imgOrigArray = new int[taWidth*taHeight];
-
-
-            for (int i = 0; i <imgHeight/taHeight ; i++) {
-                for (int j = 0; j < imgWidth / taWidth; j++) {
-
-                    roiRect.setLocation(point); //move the rectangle to desired position
-                    imgOrigRaster.getPixels((int)roiRect.getX(), (int)roiRect.getY(), (int)roiRect.getWidth(), (int)roiRect.getHeight(), imgOrigArray);
-                    tempArray = compareArrays(imgOrigArray, thresholdArray);
-                    imgDietheredRaster.setPixels((int)roiRect.getX(), (int)roiRect.getY(), (int)roiRect.getWidth(), (int)roiRect.getHeight(), tempArray);
-
-                    point.translate(taWidth,0); //translate point on next part of the image
-                }
-                point.setLocation(0,i*taHeight);//return point to first column and next row
-            }
-            imgDiethered.setData(imgDietheredRaster);
-
-            return imgDiethered;
+        } else {
+            System.out.println("Image is not Grayscale"+imgOrig.getColorModel().getColorSpace());
+            imgOrig = im2gray(imgOrig);
         }
 
-/** Helper method needed for dithering
- * @param imgArray int[] integer array of an image
- * @param thresholdArray int[] integer array of a threshold
- * @return integer array of the comparison between input arrays
- */
+
+        // initialize Raster of the original image and WritableRaster of the dietheredImage
+        BufferedImage imgDiethered = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_BYTE_BINARY);
+        Raster imgOrigRaster = imgOrig.getData();
+        WritableRaster imgDietheredRaster = imgOrigRaster.createCompatibleWritableRaster();
+
+        // initialize a point and rectangle for dithering
+        Point point = new Point();
+        Dimension dim = new Dimension(taWidth, taHeight);
+        Rectangle roiRect = new Rectangle(point, dim);
+
+        // initialize arrays for getting pixel data
+        int[] tempArray = new int[taWidth*taHeight];
+        int[] imgOrigArray = new int[taWidth*taHeight];
+
+        //TODO solve problem with the halftoning near the lover and right edges. Define conditions to go to the edg
+        for (int i = 0; i <imgHeight/taHeight ; i++) {
+            for (int j = 0; j <imgWidth / taWidth; j++) {
+
+                roiRect.setLocation(point); //move the rectangle to desired position
+                imgOrigRaster.getPixels((int)roiRect.getX(), (int)roiRect.getY(), (int)roiRect.getWidth(), (int)roiRect.getHeight(), imgOrigArray);
+                tempArray = compareArrays(imgOrigArray, thresholdArray);
+                imgDietheredRaster.setPixels((int)roiRect.getX(), (int)roiRect.getY(), (int)roiRect.getWidth(), (int)roiRect.getHeight(), tempArray);
+
+                point.translate(taWidth,0); //translate point on next part of the image
+            }
+            point.setLocation(0,i*taHeight);//return point to first column and next row
+        }
+        imgDiethered.setData(imgDietheredRaster);
+
+        return imgDiethered;
+    }
+
+    /** Helper method needed for dithering
+     * @param imgArray int[] integer array of an image
+     * @param thresholdArray int[] integer array of a threshold
+     * @return integer array of the comparison between input arrays
+     */
     private int[] compareArrays(int[] imgArray, int[] thresholdArray) {
 
         int[] outputArray = new int[thresholdArray.length]; // Arrays has to be the same length

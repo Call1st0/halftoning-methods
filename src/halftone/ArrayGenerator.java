@@ -1,6 +1,6 @@
 package halftone;
 
-import java.awt.image.BufferedImage;
+import java.util.Random;
 
 public class ArrayGenerator {
 
@@ -11,16 +11,30 @@ public class ArrayGenerator {
         int[] arrayLevelDieth = new int[ARRLENGHT];
 
         for (int i = 0; i < ARRLENGHT; i++) {
-            arrayLevelDieth[i] = (int)Math.round(((double)i)* 255.0 / ARRLENGHT) ;
+            arrayLevelDieth[i] = (int)Math.round(i* 255.0 / ARRLENGHT) ;
         }
-
-
-     /*   int[] arrayLevelDieth = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-        for (int i = 0; i < arrayLevelDieth.length; i++) {
-            arrayLevelDieth[i] = arrayLevelDieth[i] * 255 / 15;
-        }*/
 
         return arrayLevelDieth;
     }
+
+    // Fisher-Yates shuffle
+    public static int[] createRandomArray(int arraySize) {
+
+        int[] arrayLevelRandDieth = createArray(arraySize);
+
+        int j;
+        int temp;
+        Random rand = new Random();
+        for (int i = arrayLevelRandDieth.length-1; i > 0; i--) {
+            j = rand.nextInt(i);
+            temp = arrayLevelRandDieth[i];
+            arrayLevelRandDieth[i] = arrayLevelRandDieth[j];
+            arrayLevelRandDieth[j] = temp;
+        }
+
+        return arrayLevelRandDieth;
+
+    }
+
 
 }

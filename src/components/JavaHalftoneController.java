@@ -80,8 +80,11 @@ public class JavaHalftoneController {
                 case "Grayscale":
                     image = img.im2gray(image);
                     break;
+                case "Threshold":
+                    image = img.threshold(image, 128);
+                    break;
                 case "Ordered dither":
-                    image = img.orderedDither(image, ArrayGenerator.createArray(30));
+                    image = img.orderedDither(image, ArrayGenerator.createArray(100));
                     break;
                 case "Error diffusion":
                     break;
@@ -125,7 +128,7 @@ public class JavaHalftoneController {
     @FXML
     private void setChoiceBox1() {
         ObservableList<String> choiceOptions = FXCollections.observableArrayList(
-                "Grayscale", "Ordered dither", "Error diffusion");
+                "Grayscale", "Threshold","Ordered dither", "Error diffusion");
         choiceBox1.setItems(choiceOptions);
         choiceBox1.setValue("Grayscale");
 
