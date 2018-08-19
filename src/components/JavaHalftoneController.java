@@ -81,12 +81,13 @@ public class JavaHalftoneController {
                     image = img.im2gray(image);
                     break;
                 case "Threshold":
-                    image = img.threshold(image, 128);
+                    image = img.threshold(image, 50);
                     break;
                 case "Ordered dither":
                     image = img.orderedDither(image, ArrayGenerator.createArray(100));
                     break;
                 case "Error diffusion":
+                    image = img.errorDiff(image);
                     break;
             }
 

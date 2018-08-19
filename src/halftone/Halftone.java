@@ -149,6 +149,108 @@ public class Halftone {
         return imgDiethered;
     }
 
+    /*
+    Pseudo code for error diffusion
+
+    Create writable raster from original image
+
+
+
+    for each y from top to bottom
+   for each x from left to right
+      oldpixel  := pixel[x][y]
+      newpixel  := find_closest_palette_color(oldpixel)
+      pixel[x][y]  := newpixel
+      quant_error  := oldpixel - newpixel
+      pixel[x + 1][y    ] := pixel[x + 1][y    ] + quant_error * 7 / 16
+      pixel[x - 1][y + 1] := pixel[x - 1][y + 1] + quant_error * 3 / 16
+      pixel[x    ][y + 1] := pixel[x    ][y + 1] + quant_error * 5 / 16
+      pixel[x + 1][y + 1] := pixel[x + 1][y + 1] + quant_error * 1 / 16
+
+     */
+
+    public BufferedImage errorDiff(BufferedImage imgOrig) {
+
+        // size of the original image
+        int imgWidth = imgOrig.getWidth();
+        int imgHeight = imgOrig.getHeight();
+
+        // Check if image is grayscale
+        int type = imgOrig.getColorModel().getColorSpace().getType();
+        boolean isGrayscale = (type == ColorSpace.TYPE_GRAY || type == ColorSpace.CS_GRAY);
+
+        if (isGrayscale) {
+            System.out.println("Image is Grayscale" );
+
+        } else {
+            System.out.println("Image is not Grayscale"+imgOrig.getColorModel().getColorSpace());
+            imgOrig = im2gray(imgOrig);
+        }
+
+
+
+
+        // initialize Raster of the original image and WritableRaster of the dietheredImage
+        BufferedImage imgDiethered = new BufferedImage(imgWidth,imgHeight,BufferedImage.TYPE_BYTE_BINARY);
+        WritableRaster imgOrigWritableRaster = imgOrig.getRaster();
+        WritableRaster imgDietheredRaster = imgOrigWritableRaster.createCompatibleWritableRaster();
+
+
+        int whitePix = 255;
+        int blackPix = 0;
+        int thresholdPix = 127;
+        int newPix;
+        int bandSample = 0;
+
+
+
+
+        for (int row = 0; row <imgHeight ; row++) {
+            for (int col = 0; col < imgWidth; col++) {
+
+                // Get the original pixel value
+
+                int origPix=imgOrigWritableRaster.getSample(col, row, bandSample);//Sample band is 0 since the image must be grayscale
+
+                if (origPix >= thresholdPix) {
+                    newPix = whitePix;
+                    imgDietheredRaster.setSample(col, row, bandSample, newPix); //White pixel
+                } else {
+                    newPix = blackPix;
+                    imgDietheredRaster.setSample(col, row, bandSample, newPix); //Black pixel
+                }
+                double quantError = origPix - newPix;
+
+                if (col < imgWidth-1) {
+                    imgOrigWritableRaster.setSample(col + 1, row, bandSample,
+                            imgOrigWritableRaster.getSample(col + 1, row, bandSample) + (int)(quantError*7.0/16.0 ));
+
+
+                }
+
+                if (col!=0 && row < imgHeight-1) {
+                    imgOrigWritableRaster.setSample(col - 1, row + 1, bandSample,
+                            imgOrigWritableRaster.getSample(col - 1, row + 1, bandSample) + (int)(quantError*3.0/16.0 ));
+                }
+
+                if (row < imgHeight-1) {
+                    imgOrigWritableRaster.setSample(col, row + 1, bandSample,
+                            imgOrigWritableRaster.getSample(col, row + 1, bandSample) + (int)(quantError*5.0/16.0 ));
+                }
+
+                if (col < imgWidth-1 && row < imgHeight-1) {
+                    imgOrigWritableRaster.setSample(col+1, row + 1, bandSample,
+                            imgOrigWritableRaster.getSample(col+1, row + 1, bandSample) + (int)(quantError*1.0/16.0 ));
+                }
+
+            }
+
+        }
+        imgDiethered.setData(imgDietheredRaster);
+        return imgDiethered;
+    }
+
+
     /** Helper method needed for dithering
      * @param imgArray int[] integer array of an image
      * @param thresholdArray int[] integer array of a threshold
