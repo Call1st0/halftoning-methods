@@ -10,6 +10,8 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -18,6 +20,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +51,22 @@ public class JavaHalftoneController {
                 textField1.setText(newValue);
             }
         });
+        //Set listener for mous pressed
+        imgView1.setOnMousePressed(event -> {
+            Point2D mouse = new Point2D(event.getX(), event.getY());
+            System.out.println(mouse.toString());
+            shiftImageViewPort();
+        });
+    }
+
+    // Helper method to populate choiceBox
+    @FXML
+    private void setChoiceBox1() {
+        ObservableList<String> choiceOptions = FXCollections.observableArrayList(
+                "Grayscale", "Threshold","Ordered dither", "Error diffusion");
+        choiceBox1.setItems(choiceOptions);
+        choiceBox1.setValue("Grayscale");
+
     }
 
     @FXML
@@ -91,16 +110,21 @@ public class JavaHalftoneController {
                     break;
             }
 
-
-
             setImageInView(imgView1, image);
         }
     }
+
 
     // Helper method to set image in image view
     private void setImageInView(ImageView imgView, BufferedImage bimg) {
         Image imgfx = SwingFXUtils.toFXImage(bimg, null);
         imgView.setImage(imgfx);
+    }
+
+    private void shiftImageViewPort() {
+        Rectangle2D viewPort = imgView1.getViewport();
+
+        imgView1.setViewport(new Rectangle2D(100, 100,300,300));
     }
 
     // helper function to show only image files in file chooser and return selected Image File
@@ -125,20 +149,7 @@ public class JavaHalftoneController {
         return null;
     }
 
-    // Helper method to populate choiceBox
-    @FXML
-    private void setChoiceBox1() {
-        ObservableList<String> choiceOptions = FXCollections.observableArrayList(
-                "Grayscale", "Threshold","Ordered dither", "Error diffusion");
-        choiceBox1.setItems(choiceOptions);
-        choiceBox1.setValue("Grayscale");
 
-
-//        getSelectionModel()
-//    .selectedItemProperty()
-//    .addListener( (ObservableValue<? extends String> observable, String oldValue, String newValue) -> System.out.println(newValue) );
-
-    }
 
 
 
