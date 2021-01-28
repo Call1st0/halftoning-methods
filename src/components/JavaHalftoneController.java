@@ -2,6 +2,8 @@ package components;
 
 import halftone.ArrayGenerator;
 import halftone.Halftone;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -20,6 +22,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -42,7 +45,7 @@ public class JavaHalftoneController {
     // Initialization method that can call needed procedures during loading of the form
     @FXML
     protected void initialize() {
-        setChoiceBox1();
+        setChoiceBox(choiceBox1);
 
         //Set listener for change in choicebox
         choiceBox1.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
@@ -51,21 +54,62 @@ public class JavaHalftoneController {
                 textField1.setText(newValue);
             }
         });
-        //Set listener for mous pressed
+
+        // Neaded to initialize Point2D object without values
+        ObjectProperty<Point2D> mouseDown = new SimpleObjectProperty<>();
+
         imgView1.setOnMousePressed(event -> {
-            Point2D mouse = new Point2D(event.getX(), event.getY());
-            System.out.println(mouse.toString());
-            shiftImageViewPort();
+            Point2D mousePress = new Point2D(event.getX(), event.getY());
+            mouseDown.set(mousePress);
         });
+
+        //Set listener for mouse Dragged
+        imgView1.setOnMouseDragged(event -> {
+            Point2D mouseAbsPos = new Point2D(event.getX(), event.getY()); //Absolute position
+            Point2D mouseRelPos = mouseAbsPos.subtract(mouseDown.get()); //Relative difference
+
+            shiftImageViewPort(imgView1,mouseRelPos);
+            mouseDown.set(new Point2D(event.getX(), event.getY()));
+        });
+
+        imgView1.setOnScroll(event -> {
+            double scrollValue = event.getDeltaY();
+            System.out.println(scrollValue);
+
+            if (imgView1.getImage() != null) {
+
+                Rectangle2D viewport = imgView1.getViewport();
+                Rectangle2D newViewport = new Rectangle2D(0,0, viewport.getHeight() - scrollValue, viewport.getHeight() - scrollValue);
+                imgView1.setViewport(newViewport);
+
+
+            }
+
+
+        });
+
+
+
+//        imgView1.setOnScroll(event -> {
+//            double scrollDelta = event.getDeltaY();
+//            Rectangle2D viewport = imgView1.getViewport();
+//
+//            double scale = MathscrollDelta;
+//            System.out.println(scrollDelta);
+//
+//
+//
+//           // imgView1.setViewport(new Rectangle2D(0,0,newWidth,newHeight));
+//        });
     }
 
     // Helper method to populate choiceBox
     @FXML
-    private void setChoiceBox1() {
+    private void setChoiceBox(ChoiceBox choiceBox) {
         ObservableList<String> choiceOptions = FXCollections.observableArrayList(
                 "Grayscale", "Threshold","Ordered dither", "Error diffusion");
-        choiceBox1.setItems(choiceOptions);
-        choiceBox1.setValue("Grayscale");
+        choiceBox.setItems(choiceOptions);
+        choiceBox.setValue("Grayscale");
 
     }
 
@@ -119,12 +163,28 @@ public class JavaHalftoneController {
     private void setImageInView(ImageView imgView, BufferedImage bimg) {
         Image imgfx = SwingFXUtils.toFXImage(bimg, null);
         imgView.setImage(imgfx);
+        imgView.setViewport(new Rectangle2D(0,0,imgView.getImage().getWidth(), imgView.getImage().getHeight()));
     }
 
-    private void shiftImageViewPort() {
-        Rectangle2D viewPort = imgView1.getViewport();
+    private void shiftImageViewPort(ImageView imageView, Point2D delta) {
+        // Check if image is set
+        if (imageView.getImage()!=null) {
 
-        imgView1.setViewport(new Rectangle2D(100, 100,300,300));
+            Rectangle2D viewport = imageView.getViewport();
+
+            double width = imageView.getImage().getWidth();
+            double height = imageView.getImage().getHeight();
+
+            double maxX = width - viewport.getWidth();
+            double maxY = height - viewport.getHeight();
+
+            double minX = clamp(viewport.getMinX() - delta.getX(), 0, maxX);
+            double minY = clamp(viewport.getMinY() - delta.getY(), 0, maxY);
+
+            imageView.setViewport(new Rectangle2D(minX, minY, viewport.getWidth(), viewport.getHeight()));
+        }
+
+
     }
 
     // helper function to show only image files in file chooser and return selected Image File
@@ -149,6 +209,15 @@ public class JavaHalftoneController {
         return null;
     }
 
+    // Helper function for clamping a value between min and max
+    private double clamp(double value, double min, double max) {
+
+        if (value < min)
+            return min;
+        if (value > max)
+            return max;
+        return value;
+    }
 
 
 
